@@ -1,7 +1,11 @@
+import 'dart:ffi';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:sprintf/sprintf.dart';
 
 void main() {
   runApp(MaterialApp(home: Appbar()));
@@ -35,18 +39,48 @@ class Appbar extends StatefulWidget {
 }
 
 class AppBarForTabBarDemo extends State with SingleTickerProviderStateMixin {
-  String n = "";
+  //String n = "";
 
   final adddo = GlobalKey<FormState>();
   List item = [
-    {"title": "預設1", "checked": false},
-    {"title": "預設2", "checked": false},
-    {"title": "預設3", "checked": false}
+    {
+      "name": "預設1",
+      "directions": "預設1",
+      "checked": false,
+      "date": "1999-06-09 14:31"
+    },
+    {
+      "name": "預設2",
+      "directions": "預設2",
+      "checked": false,
+      "date": "2000-06-09 14:31"
+    },
+    {
+      "name": "預設3",
+      "directions": "預設3",
+      "checked": false,
+      "date": "2001-06-09 14:31"
+    }
   ];
   List done = [
-    {"title": "預設4", "checked": true},
-    {"title": "預設5", "checked": true},
-    {"title": "預設6", "checked": true}
+    {
+      "name": "預設4",
+      "directions": "預設4",
+      "checked": true,
+      "date": "2002-06-09 14:31"
+    },
+    {
+      "name": "預設5",
+      "directions": "預設5",
+      "checked": true,
+      "date": "2003-06-09 14:31"
+    },
+    {
+      "name": "預設6",
+      "directions": "預設6",
+      "checked": true,
+      "date": "2003-06-09 14:31"
+    }
   ];
   final List<Tab> _tab = <Tab>[
     Tab(text: '未完成'),
@@ -72,11 +106,19 @@ class AppBarForTabBarDemo extends State with SingleTickerProviderStateMixin {
         floatingActionButton: IconButton(
           icon: Icon(Icons.add_circle),
           onPressed: () async {
-            var ans = await _showAlertDialog(context, 0,);
+            var ans = await _showAlertDialog(
+              context,
+              0,
+            );
             print(ans);
-            if (ans != "") {
+            if (ans?.length == 3) {
               setState(() {
-                item.add({"title": ans, "checked": false});
+                item.add({
+                  "name": ans?[0],
+                  "directions": ans?[1],
+                  "checked": false,
+                  "date": ans?[2]
+                });
               });
             }
           },
@@ -102,10 +144,7 @@ class AppBarForTabBarDemo extends State with SingleTickerProviderStateMixin {
                           value: false,
                           onChanged: (e) {
                             setState(() {
-                              done.add({
-                                "title": item[index]["title"],
-                                "checked": !item[index]["checked"]
-                              });
+                              done.add(item[index]);
                               item.remove(item[index]);
                             });
                           },
@@ -114,13 +153,23 @@ class AppBarForTabBarDemo extends State with SingleTickerProviderStateMixin {
                       Container(
                           width: list_width - 210,
                           child: TextButton(
-                              onPressed: () {
-                                
-                                  var ans = _showAlertDialog(context, 2,);
-                                
+                              onPressed: () async {
+                                var list = await _showAlertDialog(context, 2, {
+                                  "name": item[index]["name"],
+                                  "index": "${index + 1}",
+                                  "directions": item[index]["directions"],
+                                  "date": item[index]["date"]
+                                });
+                                if (list?.length == 2) {
+                                  print("object");
+                                  setState(() {
+                                    item[index]["name"] = list?[0];
+                                    item[index]["directions"] = list?[1];
+                                  });
+                                }
                               },
                               child: Text(
-                                "${item[index]["title"]}",
+                                "${item[index]["name"]}",
                                 textAlign: TextAlign.left,
                               ))),
                       Container(
@@ -128,11 +177,16 @@ class AppBarForTabBarDemo extends State with SingleTickerProviderStateMixin {
                         children: [
                           IconButton(
                               onPressed: () async {
-                                var ans =
-                                    await _showAlertDialog(context, 1,);
+                                var ans = await _showAlertDialog(context, 1, {
+                                  "name": item[index]["name"],
+                                  "index": "${index + 1}",
+                                  "directions": item[index]["directions"],
+                                  "date": item[index]["date"]
+                                });
                                 setState(() {
-                                  if (ans != "") {
-                                    item[index]["title"] = ans;
+                                  if (ans?.length == 2) {
+                                    item[index]["name"] = ans?[0];
+                                    item[index]["directions"] = ans?[1];
                                   }
                                 });
                               },
@@ -170,28 +224,47 @@ class AppBarForTabBarDemo extends State with SingleTickerProviderStateMixin {
                           icon: Icon(Icons.rotate_right),
                           onPressed: () {
                             setState(() {
-                              item.add({
-                                "title": done[index]["title"],
-                                "checked": !done[index]["checked"]
-                              });
+                              item.add(done[index]);
                               done.remove(done[index]);
                             });
                           },
                         )),
                     Container(
                       width: list_width - 210,
-                      child: Text("${done[index]["title"]}",
-                          textAlign: TextAlign.left),
+                      child: TextButton(
+                        onPressed: () async {
+                          var list = await _showAlertDialog(context, 2, {
+                            "name": done[index]["name"],
+                            "index": "${index + 1}",
+                            "directions": done[index]["directions"],
+                            "date": done[index]["date"],
+                          });
+                          if (list?.length == 2) {
+                            setState(() {
+                              done[index]["name"] = list?[0];
+                              done[index]["directions"] = list?[1];
+                            });
+                          }
+                        },
+                        child: Text("${done[index]["name"]}",
+                            textAlign: TextAlign.left),
+                      ),
                     ),
                     Container(
                         child: Row(
                       children: [
                         IconButton(
                             onPressed: () async {
-                              var ans = await _showAlertDialog(context, 1,);
+                              var ans = await _showAlertDialog(context, 1, {
+                                "name": done[index]["name"],
+                                "index": "$index+1",
+                                "directions": done[index]["directions"],
+                                "date": done[index]["date"],
+                              });
                               setState(() {
-                                if (ans != "") {
-                                  done[index]["title"] = ans;
+                                if (ans?.length == 2) {
+                                  done[index]["name"] = ans?[0];
+                                  done[index]["directions"] = ans?[1];
                                 }
                               });
                             },
@@ -220,7 +293,7 @@ class AppBarForTabBarDemo extends State with SingleTickerProviderStateMixin {
                         decoration: InputDecoration(labelText: 'title'),
                         onSaved: (val) {
                           setState(() {
-                            item.add({"title": val, "checked": false});
+                            item.add({"name": val, "checked": false});
                             adddo.currentState!.reset();
                           });
                         },
@@ -260,27 +333,45 @@ class AppBarForTabBarDemo extends State with SingleTickerProviderStateMixin {
   }
 }
 
-Future<String?> _showAlertDialog(
-    BuildContext context, int mode, [Map? item]) async {
+Future<List?> _showAlertDialog(BuildContext context, int mode,
+    [Map? item]) async {
   //mode:模式，0:新增，1:修改，2:顯示項目
-  String a = "";
+  String title = "";
+  String directions = "";
+  List list = [];
   if (mode == 0) {
-    return showDialog<String>(
+    return showDialog<List>(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
               title: Text('新增事項'),
               content: Container(
-                height: 70,
+                height: 150,
                 child: Column(
                   children: <Widget>[
                     TextFormField(
                       autofocus: true,
                       decoration: InputDecoration(labelText: 'title'),
                       onChanged: (val) {
-                        a = val;
+                        title = val;
                       },
-                    )
+                    ),
+                    Container(height: 10),
+                    Scrollbar(
+                        child: TextFormField(
+                            autofocus: false,
+                            inputFormatters: [directionsformatter()],
+                            minLines: 1,
+                            maxLines: 5,
+                            textInputAction: TextInputAction.newline,
+                            keyboardType: TextInputType.multiline,
+                            decoration: InputDecoration(
+                                labelText: 'directions',
+                                border: OutlineInputBorder(),
+                                hintText: "說明"),
+                            onChanged: (val) {
+                              directions = val;
+                            }))
                   ],
                 ),
               ),
@@ -291,35 +382,67 @@ Future<String?> _showAlertDialog(
                           TextStyle(color: const Color.fromARGB(255, 0, 0, 0))),
                   onPressed: () {
                     //adddo.currentState!.save();
-                    Navigator.of(context).pop(a);
+                    final date = DateTime.now();
+
+                    String datetime =
+                        "${date.year.toString()}-${sprintf("%02i", [
+                          date.month.toInt()
+                        ])}-${sprintf("%02i", [
+                          date.day.toInt()
+                        ])} ${sprintf("%02i", [
+                          date.hour.toInt()
+                        ])}:${sprintf("%02i", [date.minute.toInt()])}";
+                    List list = [title, directions, datetime];
+                    Navigator.of(context).pop(list);
                   },
                 ),
                 TextButton(
                   child: Text('取消',
                       style: TextStyle(color: Color.fromARGB(255, 0, 0, 0))),
                   onPressed: () {
-                    Navigator.of(context).pop("");
+                    Navigator.of(context).pop(["0"]);
                   },
                 )
               ]);
         });
   } else if (mode == 1) {
-    return showDialog<String>(
+    return showDialog<List>(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
               title: Text('修改事項'),
               content: Container(
-                height: 70,
+                height: 300,
                 child: Column(
                   children: <Widget>[
                     TextFormField(
                       autofocus: true,
                       decoration: InputDecoration(labelText: 'title'),
+                      initialValue: item?["name"],
                       onChanged: (val) {
-                        a = val;
+                        item?["name"] = val;
                       },
-                    )
+                    ),
+                    Container(
+                      height: 10,
+                    ),
+                    Scrollbar(
+                        child: TextFormField(
+                            autofocus: false,
+                            inputFormatters: [directionsformatter()],
+                            minLines: 1,
+                            maxLines: 5,
+                            textInputAction: TextInputAction.newline,
+                            keyboardType: TextInputType.multiline,
+                            decoration: InputDecoration(
+                                labelText: "directions",
+                                border: OutlineInputBorder()),
+                            //maxLength: 21,
+                            initialValue: item?["directions"],
+                            onChanged: (String val) {
+                              item?["directions"] = val;
+                            })),
+                    Text(item?["date"])
                   ],
                 ),
               ),
@@ -330,48 +453,98 @@ Future<String?> _showAlertDialog(
                           TextStyle(color: const Color.fromARGB(255, 0, 0, 0))),
                   onPressed: () {
                     //adddo.currentState!.save();
-                    Navigator.of(context).pop(a);
+                    list = [item?["name"], item?["directions"]];
+                    Navigator.of(context).pop(list);
                   },
                 ),
                 TextButton(
                   child: Text('取消',
                       style: TextStyle(color: Color.fromARGB(255, 0, 0, 0))),
                   onPressed: () {
-                    Navigator.of(context).pop("");
+                    Navigator.of(context).pop(["0"]);
                   },
                 )
               ]);
         });
   } else if (mode == 2) {
-    return showDialog<String>(
+    return showDialog<List>(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-              title: Text("a"),
+              title: Text("第${item?["index"]}項"),
               content: Container(
-                height: 70,
+                height: 250,
                 child: Column(
-                  children: <Widget>[Text("名稱"), Text("說明")],
+                  children: <Widget>[
+                    TextFormField(
+                        autofocus: false,
+                        readOnly: true,
+                        maxLines: null,
+                        decoration: InputDecoration(
+                            labelText: "名稱", border: InputBorder.none),
+                        initialValue: item?["name"],
+                        onChanged: (val) {
+                          item?["name"] = val;
+                        }),
+                    Scrollbar(
+                      child: TextFormField(
+                          autofocus: false,
+                          readOnly: true,
+                          textInputAction: TextInputAction.newline,
+                          keyboardType: TextInputType.multiline,
+                          minLines: 1,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                              labelText: "directions",
+                              border: OutlineInputBorder()),
+                          initialValue: item?["directions"],
+                          onChanged: (val) {
+                            item?["direction"] = val;
+                          }),
+                    ),
+                    Text(item?["date"])
+                  ],
                 ),
               ),
               actions: <Widget>[
-                TextButton(
+                /* TextButton(
                   child: Text('修改',
-                      style:
-                          TextStyle(color: const Color.fromARGB(255, 0, 0, 0))),
-                  onPressed: () {
-                    //adddo.currentState!.save();
-                    Navigator.of(context).pop(a);
-                  },
-                ),
-                TextButton(
-                  child: Text('取消',
                       style: TextStyle(color: Color.fromARGB(255, 0, 0, 0))),
                   onPressed: () {
-                    Navigator.of(context).pop("");
+                    
+                    list=[item?["name"],item?["direction"]];
+                    Navigator.of(context).pop(list);
+                    }
+
+                ),*/
+                TextButton(
+                  child: Text('關閉',
+                      style: TextStyle(color: Color.fromARGB(255, 0, 0, 0))),
+                  onPressed: () {
+                    Navigator.of(context).pop(["0"]);
                   },
                 )
               ]);
         });
+  }
+}
+
+class directionsformatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    String newText = newValue.text;
+    String formattedText = '';
+    for (int i = 0; i < newText.length; i++) {
+      if (i > 0 && i % 10 == 0) {
+        formattedText += '\n';
+      }
+      formattedText += newText[i];
+    }
+    return TextEditingValue(
+        text: formattedText,
+        selection: newValue.selection.copyWith(
+            baseOffset: formattedText.length,
+            extentOffset: formattedText.length));
   }
 }
